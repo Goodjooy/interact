@@ -1,65 +1,31 @@
-use std::{collections::HashMap, sync::mpsc};
+use crate::interact::context::ContextInteractHandle;
+use crate::interact::utils::MultiToOne;
+use std::{
+    sync::mpsc::SendError,
+};
 
 use msg_chain::MessageChain;
-use msg_proc::{
-    send::body::{self, MsgSend},
-    Sender,
-};
-use serde_json::Value;
+use msg_proc::{Sender, send::body::SendBody};
 
-const LOWEST_PRIORITY: u8 = 0;
-const HEIGHTEST_PRIORITY: u8 = 255;
-trait InteractManager {
-    /// 当前manager的消息优先级，数字越大优先级越高
-    fn get_priority(&self) -> u8 {
-        LOWEST_PRIORITY
-    }
 
-    fn message_analyze(
-        &self,
-        msg: Vec<Box<dyn MessageChain>>,
-        sender: Box<dyn Sender>,
-    ) -> Option<MesageCmd>;
-}
+use self::{manage::{InteractManager, MessageCmd}, utils::Channel};
 
-struct MesageCmd {
-    main_cmd: String,
-    side_named_cmd: HashMap<String, String>,
-    side_list_cmd: Vec<String>,
-}
+mod manage;
+mod sharp_cmd;
+mod utils;
+mod manager_contain;
+mod context;
 
-struct InteractorManageContainer {
-    manager: Box<dyn InteractManager>,
-    handles: HashMap<String, Box<dyn Fn() -> dyn Interactor>>,
-}
-
-trait Interactor {
+ pub  trait  Interactor  {
     fn do_interact(
-        self,
-        cmd: MesageCmd,
+        &self,
+        cmd: MessageCmd,
         msg: Vec<Box<dyn MessageChain>>,
         sender: Box<dyn Sender>,
-        channel: &mut mpsc::Sender<Value>,
-    ) -> Option<Box<dyn ContextInteractHandle>>;
+        channel: &Channel,
+    ) -> Result<Option<Box<dyn ContextInteractHandle>>,SendError<SendBody>>;
 }
 
-enum ActiveMod {
-    SameUserInSameGroup,
-    SameUserInAnyGroup,
-    AnyUserInSameGroup,
-    AnyUserInAnyGroup,
-}
-trait ContextInteractHandle {
-    fn get_sign(&self) -> String;
 
-    fn active_mod(&self) -> ActiveMod {
-        ActiveMod::SameUserInSameGroup
-    }
 
-    fn do_follow_interact(
-        &mut self,
-        msg: Vec<Box<dyn MessageChain>>,
-        sender: Box<dyn Sender>,
-        channel: &mut mpsc::Sender<Value>,
-    ) -> Option<()>;
-}
+
