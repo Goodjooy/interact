@@ -1,10 +1,10 @@
 use std::sync::mpsc::SendError;
-use msg_proc::send::{body::SendBody, cmd::CmdWithSendBody};
+use msg_proc::send::{cmd::CmdWithSendBody};
 
-
+#[derive(Debug)]
 pub enum InteractError {
     SendErr(SendError<CmdWithSendBody>),
-
+    ConstructSendFromSrouceFailure{src_type:String,sender_id:u64},
     ErrInfo(String),
 }
 

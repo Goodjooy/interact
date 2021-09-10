@@ -1,13 +1,11 @@
 //! # 消息交互器控制组
 //! * 根据从`Reciver<MessageRev>` 收到的消息，按照 交互控制器优先级遍历找到第一个匹配的控制器，并进行对应交互
 
-use std::process::Output;
-use std::sync::Arc;
 use std::sync::mpsc::{self, SendError};
+use std::sync::Arc;
 use std::{collections::HashMap, sync::Mutex};
 
 pub mod handle_builder;
-pub mod interact_pool;
 
 use msg_proc::{
     chain::chain_builder::ChainBuilder,
@@ -67,9 +65,9 @@ impl InteractHandle {
 
     pub fn action(&self, data: MessageRev, chan: &Channel) -> InteractorResult<()> {
         let msg = data;
-        let msg_type = msg.msg_type;
-        let sender = msg.sender;
-        let message_chain = msg.chain;
+        let msg_type = &msg.msg_type;
+        let sender = &msg.sender;
+        let message_chain = &msg.chain;
 
         // 全局上下文响应
         {
@@ -126,10 +124,7 @@ impl InteractHandle {
         // 新建上下文
         {
             for handle_manage in &self.orded_handles {
-                if let Some(cmd) = handle_manage
-                    .get_manager()
-                    .message_analyze(&message_chain, &sender)
-                {
+                if let Some(cmd) = handle_manage.get_manager().message_analyze(&msg) {
                     if let Some(handle) = handle_manage.get_handle(cmd.get_cmd()) {
                         let res = handle.do_interact(cmd, &message_chain, &sender, chan)?;
                         if let Some(context) = res {
@@ -182,18 +177,18 @@ impl InteractHandle {
         Ok(())
     }
 
-    pub fn work_in_thread<I: Iterator<Item = MessageRev>, F: Fn(InteractorResult<()>)>(
+    pub fn work_in_thread<I: Iterator<Item = MessageRev>>(
         self,
         input: &mut I,
         chan: &Channel,
         pool: &ThreadPool,
         res_handle_chan: mpsc::Sender<InteractorResult<()>>,
     ) {
-        let self_data=Arc::new(self);
+        let self_data = Arc::new(self);
         while let Some(data) = input.next() {
             let channel = chan.clone();
             let res_chan = res_handle_chan.clone();
-            let sdata=Arc::clone(&self_data);
+            let sdata = Arc::clone(&self_data);
             pool.execute(move || {
                 let res = sdata.action(data, &channel);
                 res_chan.send(res).expect("failure to send Result info");
@@ -216,4 +211,37 @@ fn context_create_failure(
 
     let res = new_source_send(&msg_type, sender, msg, None).expect("Source Send Failure");
     chan.send(res)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::interact::mocks::{create_data, create_mock_msg_rev};
+    use std::sync::mpsc::channel;
+
+    #[test]
+    fn test_pick_no_context() {
+        let manage = create_data();
+        let msg = ChainBuilder::new().text("CMD ABAB").build();
+        let msg = create_mock_msg_rev(msg);
+
+        let pool = ThreadPool::new(2);
+
+        let (se, rv) = channel();
+        let (mse, mrv) = channel();
+        let (res_sender, res_rev) = channel();
+
+        let chan = Channel::new(&se);
+
+        let handle = handle_builder::InteractHandleBuilder::new()
+            .add_manage(manage)
+            .build();
+        let _res = std::thread::spawn(move || {
+            handle.work_in_thread(&mut mrv.iter(), &chan, &pool, res_sender);
+        });
+        mse.send(msg).unwrap();
+
+        println!("{:#?}", rv.recv());
+        println!("{:#?}", res_rev.recv());
+    }
 }

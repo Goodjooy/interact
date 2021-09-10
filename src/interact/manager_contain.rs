@@ -115,3 +115,113 @@ impl ContainerBuilder {
         self.data
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use std::sync::mpsc::channel;
+
+    use msg_proc::chain::chain_builder::ChainBuilder;
+
+    use crate::{
+        interact::{
+            mocks::{create_data, create_mock_msg_rev},
+            utils::Channel,
+        },
+        interactions::manage::MessageCmd,
+    };
+
+    use super::*;
+
+    #[test]
+    fn test_no_context_work() {
+        let manage = create_data();
+        let msg = ChainBuilder::new().text("CMD ABAB").build();
+
+        let (se, rv) = channel();
+        let chan = Channel::new(&se);
+
+        let msg = create_mock_msg_rev(msg);
+
+        let res = manage.get_manager().message_analyze(&msg);
+
+        // get cmd success
+        assert_eq!(res, Some(MessageCmd::new_main_only(&msg, &"CMD")));
+
+        let cmd = res.unwrap();
+        let main_cmd = cmd.get_cmd();
+
+        let res = manage.get_handle(main_cmd);
+
+        // get interactor
+        assert_eq!(res.is_none(), false);
+
+        // do interactor
+        let interacor = res.unwrap();
+
+        let res = interacor.do_interact(cmd, &msg.chain, &msg.sender, &chan);
+
+        assert_eq!(res.is_ok(), true);
+        let res = res.unwrap();
+        assert_eq!(res.is_none(), true);
+
+        println!("{:#?}", rv.recv());
+    }
+
+    #[test]
+    fn test_context_work() {
+        let manage = create_data();
+        let msg = ChainBuilder::new().text("CON ABAB").build();
+
+        let (se, rv) = channel();
+        let chan = Channel::new(&se);
+
+        let msg = create_mock_msg_rev(msg);
+
+        let res = manage.get_manager().message_analyze(&msg);
+
+        // get cmd success
+        assert_eq!(res, Some(MessageCmd::new_main_only(&msg, &"CON")));
+
+        let cmd = res.unwrap();
+        let main_cmd = cmd.get_cmd();
+
+        let res = manage.get_handle(main_cmd);
+
+        // get interactor
+        assert_eq!(res.is_none(), false);
+
+        // do interactor
+        let interacor = res.unwrap();
+
+        let res = interacor.do_interact(cmd, &msg.chain, &msg.sender, &chan);
+
+        assert_eq!(res.is_ok(), true);
+        let res = res.unwrap();
+        assert_eq!(res.is_none(), false);
+
+        println!("{:#?}", rv.recv());
+
+        let mut context = res.unwrap();
+
+        let msg = ChainBuilder::new().text("abab").build();
+        let msg = create_mock_msg_rev(msg);
+
+        let res = context.do_follow_interact(&msg.chain, &msg.sender, &chan);
+
+        // context continue
+        assert_eq!(res.is_ok(), true);
+        let res = res.unwrap();
+        assert_eq!(res, Some(()));
+
+        let msg = ChainBuilder::new().text("end").build();
+        let msg = create_mock_msg_rev(msg);
+
+        let res = context.do_follow_interact(&msg.chain, &msg.sender, &chan);
+
+        // context continue
+        assert_eq!(res.is_ok(), true);
+        let res = res.unwrap();
+        assert_eq!(res, None);
+    }
+}

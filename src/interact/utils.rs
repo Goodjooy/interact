@@ -3,8 +3,8 @@ use std::{
     sync::mpsc::{self, SendError},
 };
 
-use msg_proc::send::{body::{MsgSend, SendBody}, cmd::CmdWithSendBody};
-use serde::Serialize;
+use msg_proc::send::{cmd::CmdWithSendBody};
+
 
 use super::manage::MessageCmd;
 
@@ -46,7 +46,7 @@ impl MultiToOne {
 #[macro_export]
 macro_rules! multi_name_key {
     [$s:expr , $($x:expr),*] => {
-         crate::interact::MultiToOne::new(
+         MultiToOne::new(
              $s.to_string(),
             &vec![
                 $(
@@ -56,7 +56,7 @@ macro_rules! multi_name_key {
         )
     };
     ($n:ident=>[$s:expr , $($x:expr),*]) => {
-        const $n : crate::interact::MultiToOne = crate::interact::MultiToOne::new(
+        const $n : MultiToOne = crate::interact::MultiToOne::new(
             $s.to_string(),
            &vec![
                $(

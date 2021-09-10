@@ -9,7 +9,7 @@ pub struct SendHandle {
     port: String,
     chan: Receiver<CmdWithSendBody>,
 }
-struct BodyTransfrom {}
+
 
 #[derive(serde::Serialize)]
 pub struct WSSendBody {

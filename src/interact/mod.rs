@@ -1,18 +1,19 @@
 use crate::interact::context::ContextInteractHandle;
 
-use std::{ sync::mpsc::SendError};
-
 use msg_chain::MessageChain;
-use msg_proc::{send::cmd::CmdWithSendBody, Sender};
+use msg_proc::Sender;
 
 use self::{error::InteractorResult, manage::MessageCmd, utils::Channel};
 
 pub mod context;
+pub mod error;
 pub mod manage;
 pub mod manager_contain;
 pub mod utils;
-pub mod error;
-pub trait Interactor: Send +Sync{
+
+pub mod mocks;
+
+pub trait Interactor: Send + Sync {
     fn do_interact(
         &self,
         cmd: MessageCmd,
@@ -21,4 +22,3 @@ pub trait Interactor: Send +Sync{
         channel: &Channel,
     ) -> InteractorResult<Option<Box<dyn ContextInteractHandle>>>;
 }
-

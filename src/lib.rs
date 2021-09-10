@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, sync::mpsc::channel};
+
 
 mod interact;
 mod interact_handle;
@@ -24,7 +24,6 @@ pub mod interactions {
     }
     pub mod handles {
         pub use crate::interact_handle::handle_builder::InteractHandleBuilder;
-        pub use crate::interact_handle::interact_pool::InteractHandlePool;
         pub use crate::interact_handle::InteractHandle;
     }
 }

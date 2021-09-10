@@ -1,18 +1,16 @@
-use std::sync::mpsc::SendError;
-
 use msg_chain::MessageChain;
-use msg_proc::{Sender, send::body::SendBody};
+use msg_proc::Sender;
 
 use super::{error::InteractorResult, utils::Channel};
 
-#[derive(Hash,PartialEq, Eq)]
+#[derive(Hash, PartialEq, Eq)]
 pub enum ActiveMod {
     SameUserInSameGroup,
     SameUserInAnyGroup,
     AnyUserInSameGroup,
     AnyUserInAnyGroup,
 }
-pub trait ContextInteractHandle :Sync+Send{
+pub trait ContextInteractHandle: Sync + Send {
     fn get_sign(&self) -> String;
 
     fn active_mod(&self) -> ActiveMod {
