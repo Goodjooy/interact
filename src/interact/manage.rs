@@ -5,7 +5,7 @@ use msg_proc::Sender;
 
 pub const LOWEST_PRIORITY: u8 = 0;
 pub const HEIGHTEST_PRIORITY: u8 = 255;
-pub trait InteractManager {
+pub trait InteractManager:Send +Sync{
     /// 当前manager的消息优先级，数字越大优先级越高
     fn get_priority(&self) -> u8 {
         128

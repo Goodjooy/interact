@@ -3,7 +3,7 @@ use std::{
     sync::mpsc::{self, SendError},
 };
 
-use msg_proc::send::body::{MsgSend, SendBody};
+use msg_proc::send::{body::{MsgSend, SendBody}, cmd::CmdWithSendBody};
 use serde::Serialize;
 
 use super::manage::MessageCmd;
@@ -69,19 +69,25 @@ macro_rules! multi_name_key {
 
 
 pub struct Channel {
-    chan: mpsc::Sender<SendBody>,
+    chan: mpsc::Sender<CmdWithSendBody>,
 }
 
 impl Channel {
-    pub fn send<T: MsgSend + Serialize>(&self, data: T) -> Result<(), SendError<SendBody>> {
-        self.chan.send(data.into_map())
+    pub fn send(&self, data: CmdWithSendBody) -> Result<(), SendError<CmdWithSendBody>> {
+        self.chan.send(data)
     }
 }
 
 impl Channel {
-    pub fn new(send:&mpsc::Sender<SendBody>)->Self{
+    pub fn new(send:&mpsc::Sender<CmdWithSendBody>)->Self{
         Self{
             chan:send.clone()
         }
+    }
+}
+
+impl Clone for Channel  {
+    fn clone(&self) -> Self {
+        Self { chan: self.chan.clone() }
     }
 }
