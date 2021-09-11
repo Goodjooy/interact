@@ -1,6 +1,6 @@
 use msg_proc::chain::chain_handle::ToMsgHandle;
 
-use crate::interactions::manage::{InteractManager, InteractorManageContainer, MessageCmd};
+use crate::interactions::manage::{InteractManager, MessageCmd};
 
 pub struct MockManage;
 
