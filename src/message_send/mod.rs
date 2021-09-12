@@ -1,15 +1,20 @@
-use std::{sync::mpsc::Receiver, thread::JoinHandle};
+use std::{
+    sync::mpsc::Receiver,
+    thread::{sleep, JoinHandle},
+    time::Duration,
+};
 
 use msg_proc::send::{body::SendBody, cmd::CmdWithSendBody};
 
 use tokio::io::AsyncWriteExt;
 
+mod img_pre_upload;
+mod text2img;
 pub struct SendHandle {
     auth_key: String,
     port: String,
     chan: Receiver<CmdWithSendBody>,
 }
-
 
 #[derive(serde::Serialize)]
 pub struct WSSendBody {
@@ -39,6 +44,10 @@ impl SendHandle {
                     let info = format!("Send Message Success [{}]", res.status());
                     out.write_all(info.as_bytes()).await.unwrap();
                 });
+
+                // 延时发送
+                let delay = (rand::random::<f32>() * 5.0) as u64;
+                sleep(Duration::from_secs(delay));
             }
         });
         handle
