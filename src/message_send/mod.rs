@@ -6,6 +6,7 @@ use std::{
 
 use msg_proc::send::{body::SendBody, cmd::CmdWithSendBody};
 
+use serde_json::{Value, to_string, to_string_pretty};
 use tokio::io::AsyncWriteExt;
 
 mod img_pre_upload;
@@ -25,11 +26,26 @@ pub struct WSSendBody {
 }
 
 impl SendHandle {
+    pub fn new(verify_key: String, port: String, chan: Receiver<CmdWithSendBody>) -> Self {
+        Self {
+            auth_key: verify_key,
+            port,
+            chan,
+        }
+    }
+
+    pub fn set_verify_code(&mut self, code: &str) {
+        self.auth_key = code.to_string();
+    }
+
     pub fn start_http_sender(self) -> JoinHandle<()> {
         let handle = std::thread::spawn(move || {
             let runtime = tokio::runtime::Runtime::new().expect("Tokio Runtime create failure");
             while let Ok(mut data) = self.chan.recv() {
                 data.set_session_key(&self.auth_key);
+                
+                println!("Get Send Task | Cmd: {} \n body :{}",&(data.cmd).main_cmd, to_string(&data.body).unwrap());
+
                 let url = format!("{}/{}", self.port, &data.cmd.main_cmd);
                 runtime.spawn(async move {
                     let client = reqwest::Client::new();
@@ -41,7 +57,11 @@ impl SendHandle {
                         .expect("Send Message Failure");
 
                     let mut out = tokio::io::stdout();
-                    let info = format!("Send Message Success [{}]", res.status());
+                    let body=res.json::<Value>().await;
+                    let info = format!(
+                        "Send Message Success body: [{:?}]\n ",
+                        body
+                    );
                     out.write_all(info.as_bytes()).await.unwrap();
                 });
 
