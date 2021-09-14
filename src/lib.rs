@@ -20,7 +20,9 @@ pub mod interactions {
 
         pub use crate::interact::manager_contain::*;
     }
-
+    pub mod util{
+        pub use crate::interact::utils::*;
+    }
     pub mod error {
         pub use crate::interact::error::*;
     }
