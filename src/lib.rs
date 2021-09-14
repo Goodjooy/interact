@@ -6,11 +6,13 @@ mod interact_handle;
 mod message_recive;
 mod message_send;
 
+mod filter;
+
 pub mod interactions {
     pub use crate::interact::Interactor;
 
     pub mod context {
-        pub use crate::interact::context::{ActiveMod, ContextInteractHandle};
+        pub use crate::interact::context::{ActiveMod, ContextInteractHandle,ALIVE,DEATH};
     }
     pub mod manage {
         pub use crate::interact::manage::*;

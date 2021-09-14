@@ -3,6 +3,10 @@ use msg_proc::Sender;
 
 use super::{error::InteractorResult, utils::Channel};
 
+
+pub const ALIVE:InteractorResult<Option<()>>=Ok(Some(()));
+pub const DEATH:InteractorResult<Option<()>>=Ok(None);
+
 #[derive(Hash, PartialEq, Eq)]
 pub enum ActiveMod {
     SameUserInSameGroup,

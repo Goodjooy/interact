@@ -1,14 +1,11 @@
 use msg_proc::{chain::chain_builder::ChainBuilder, send::contain::new_source_send};
 
-use crate::{
-    interact::utils::Channel,
-    interactions::{
+use crate::{interact::utils::Channel, interact_result, interactions::{
         context::ContextInteractHandle,
-        error::{InteractError, InteractorResult},
+        error::{InteractorResult},
         manage::MessageCmd,
         Interactor,
-    },
-};
+    }};
 
 pub struct MockInteractor;
 
@@ -28,15 +25,11 @@ impl Interactor for MockInteractor {
             .build();
 
         channel.send(
-            new_source_send(cmd.get_src_type(), sender, msg, None).ok_or(
-                InteractError::ConstructSendFromSrouceFailure {
-                    src_type: cmd.get_src_type().clone(),
-                    sender_id: *sender.get_sender_id(),
-                },
-            )?,
+            new_source_send(cmd.get_src_type(), sender, msg, None)?
+            
         )?;
 
         // no context activiate
-        Ok(None)
+        interact_result!()
     }
 }

@@ -1,22 +1,26 @@
+use msg_proc::{send::cmd::CmdWithSendBody, SendBodyTypeNotFoundError};
 use std::sync::mpsc::SendError;
-use msg_proc::send::{cmd::CmdWithSendBody};
 
 #[derive(Debug)]
 pub enum InteractError {
-    SendErr(SendError<CmdWithSendBody>),
-    ConstructSendFromSrouceFailure{src_type:String,sender_id:u64},
+    ChannelSend(SendError<CmdWithSendBody>),
+    SendBodyTypeNotSupport(String),
     ErrInfo(String),
 }
 
-pub type InteractorResult<T>=Result<T,InteractError>;
-
+pub type InteractorResult<T> = Result<T, InteractError>;
 
 impl From<SendError<CmdWithSendBody>> for InteractError {
     fn from(input: SendError<CmdWithSendBody>) -> Self {
-        Self::SendErr(input)
+        Self::ChannelSend(input)
     }
 }
 
+impl From<SendBodyTypeNotFoundError> for InteractError {
+    fn from(err: SendBodyTypeNotFoundError) -> Self {
+        Self::SendBodyTypeNotSupport(err.target_mod)
+    }
+}
 
 impl From<String> for InteractError {
     fn from(s: String) -> Self {

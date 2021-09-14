@@ -1,9 +1,17 @@
 use msg_chain::MessageChain;
-use msg_proc::{Sender, chain::chain_builder::ChainBuilder, send::contain::new_source_send};
+use msg_proc::{chain::chain_builder::ChainBuilder, send::contain::new_source_send, Sender};
 
-use crate::{interact::utils::Channel, interactions::{Interactor, context::{ActiveMod::SameUserInSameGroup, ContextInteractHandle}, error::{InteractError, InteractorResult}, manage::MessageCmd}};
+use crate::{
+    interact::utils::Channel,
+    interact_result,
+    interactions::{
+        context::{ActiveMod::SameUserInSameGroup, ContextInteractHandle, ALIVE, DEATH},
+        error::{InteractorResult},
+        manage::MessageCmd,
+        Interactor,
+    },
+};
 use msg_proc::chain::chain_handle::ToMsgHandle;
-
 
 pub struct MockContextInteractor;
 
@@ -15,22 +23,15 @@ impl Interactor for MockContextInteractor {
         sender: &Box<dyn Sender>,
         channel: &Channel,
     ) -> InteractorResult<Option<Box<dyn ContextInteractHandle>>> {
-        let msg=ChainBuilder::new()
-        .at(*sender.get_sender_id())
-        .text("enable context: Same User in Same Group")
-        .simplify()
-        .build();
+        let msg = ChainBuilder::new()
+            .at(*sender.get_sender_id())
+            .text("enable context: Same User in Same Group")
+            .simplify()
+            .build();
 
-        channel.send(
-            new_source_send(cmd.get_src_type(), sender, msg, None).ok_or(
-                InteractError::ConstructSendFromSrouceFailure {
-                    src_type: cmd.get_src_type().clone(),
-                    sender_id: *sender.get_sender_id(),
-                },
-            )?,
-        )?;
+        channel.send(new_source_send(cmd.get_src_type(), sender, msg, None)?)?;
 
-        Ok(Some(Box::new(MockContextHandle)))
+        interact_result!(MockContextHandle)
     }
 }
 
@@ -47,13 +48,12 @@ impl ContextInteractHandle for MockContextHandle {
         _sender: &Box<dyn Sender>,
         _channel: &Channel,
     ) -> InteractorResult<Option<()>> {
-        let handle=msg.to_msg_handle();
-        let txt=handle.conbin_plain().unwrap_or(String::new());
-        if txt.starts_with("end"){
-            
-            Ok(None)
-        }else {
-            Ok(Some(()))
+        let handle = msg.to_msg_handle();
+        let txt = handle.conbin_plain().unwrap_or(String::new());
+        if txt.starts_with("end") {
+            DEATH
+        } else {
+            ALIVE
         }
     }
 

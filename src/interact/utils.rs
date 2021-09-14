@@ -3,12 +3,11 @@ use std::{
     sync::mpsc::{self, SendError},
 };
 
-use msg_proc::send::{cmd::CmdWithSendBody};
-
+use msg_proc::send::cmd::CmdWithSendBody;
 
 use super::manage::MessageCmd;
 
-#[derive(Debug, Hash,PartialEq, Eq)]
+#[derive(Debug, Hash, PartialEq, Eq)]
 pub struct MultiToOne {
     sign: String,
     names: Vec<String>,
@@ -36,9 +35,9 @@ impl MultiToOne {
         &self.sign
     }
 
-    pub fn all_names(&self)->Vec<&String>{
-        let mut t=vec![&self.sign];
-        let _res=self.names.iter().inspect(|n|t.push(n)).collect::<Vec<_>>();
+    pub fn all_names(&self) -> Vec<&String> {
+        let mut t = vec![&self.sign];
+        let _res = self.names.iter().inspect(|n| t.push(n)).collect::<Vec<_>>();
         t
     }
 }
@@ -67,27 +66,28 @@ macro_rules! multi_name_key {
    };
 }
 
-
 pub struct Channel {
     chan: mpsc::Sender<CmdWithSendBody>,
 }
 
 impl Channel {
     pub fn send(&self, data: CmdWithSendBody) -> Result<(), SendError<CmdWithSendBody>> {
-        self.chan.send(data)
+        self.chan.send(data)?;
+
+        Ok(())
     }
 }
 
 impl Channel {
-    pub fn new(send:&mpsc::Sender<CmdWithSendBody>)->Self{
-        Self{
-            chan:send.clone()
-        }
+    pub fn new(send: &mpsc::Sender<CmdWithSendBody>) -> Self {
+        Self { chan: send.clone() }
     }
 }
 
-impl Clone for Channel  {
+impl Clone for Channel {
     fn clone(&self) -> Self {
-        Self { chan: self.chan.clone() }
+        Self {
+            chan: self.chan.clone(),
+        }
     }
 }

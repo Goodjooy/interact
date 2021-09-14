@@ -22,3 +22,16 @@ pub trait Interactor: Send + Sync {
         channel: &Channel,
     ) -> InteractorResult<Option<Box<dyn ContextInteractHandle>>>;
 }
+
+#[macro_export]
+macro_rules! interact_result {
+    () => {
+        Ok(None)
+    };
+    ($x:expr)=>{
+        {
+            let data:Box<dyn ContextInteractHandle>=Box::new($x);
+            Ok(Some(data))
+        }
+    };
+}

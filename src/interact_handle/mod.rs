@@ -210,7 +210,9 @@ fn context_create_failure(
         .build();
 
     let res = new_source_send(&msg_type, sender, msg, None).expect("Source Send Failure");
-    chan.send(res)
+    chan.send(res)?;
+
+    Ok(())
 }
 
 #[cfg(test)]
